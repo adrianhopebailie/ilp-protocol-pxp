@@ -1,13 +1,14 @@
 import 'mocha'
-import { IlpStream } from '../src/stream'
+import { IlpTransport } from '../src/transport'
 import Chai from 'chai'
 import chaiAsPromised from 'chai-as-promised'
-import { createConnection, createServer } from 'net'
+import { createServer } from 'net'
+import * as WebSocket from 'ws'
 const { assert } = Chai
 Chai.use(chaiAsPromised)
 require('source-map-support').install()
 
-describe('IlpSocket', () => {
+describe('IlpStream', () => {
 
   before('create listener', () => {
     this.listener = createServer()
@@ -15,13 +16,15 @@ describe('IlpSocket', () => {
   })
   describe('constructor', () => {
     it('should return an instance of an IlpSocket', () => {
-      const socket = new IlpStream()
-      assert(socket instanceof IlpStream, 'not an ILP socket')
+      const a = new WebSo
+
+      const socket = new IlpTransport(new WebSocket(''))
+      assert(socket instanceof IlpTransport, 'not an ILP socket')
     })
   })
   describe('connect()', () => {
     it('should connect to listener', (done) => {
-      const socket = new IlpStream()
+      const socket = new IlpTransport()
       socket.on('connect', () => {
         done()
       })
@@ -30,7 +33,7 @@ describe('IlpSocket', () => {
   })
   describe('connect()', () => {
     it('should connect to listener', (done) => {
-      const socket = new IlpStream()
+      const socket = new IlpTransport()
       socket.on('connect', () => {
         done()
       })

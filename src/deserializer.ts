@@ -1,6 +1,6 @@
 import { Transform, TransformOptions, TransformCallback } from 'stream'
 import { deserializeIlpPacket } from 'ilp-packet'
-import { deserializeFrame } from './packet'
+import { deserializeIlpMessage } from './message'
 
 export class IlpPacketDeserializer extends Transform {
   constructor (options: TransformOptions) {
@@ -22,7 +22,7 @@ export class IlpPacketDeserializer extends Transform {
 
 }
 
-export class IlpFrameDeserializer extends Transform {
+export class MessageDeserializer extends Transform {
   constructor (options: TransformOptions) {
     super(Object.assign(options, {
       readableObjectMode: true
@@ -31,7 +31,7 @@ export class IlpFrameDeserializer extends Transform {
   _transform (chunk: any, encoding: string, callback: TransformCallback): void {
     if (Buffer.isBuffer(chunk)) {
       try {
-        callback(undefined, deserializeFrame(chunk))
+        callback(undefined, deserializeIlpMessage(chunk))
       } catch (e) {
         callback(e)
       }

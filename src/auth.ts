@@ -2,8 +2,13 @@ import { AccountInfo } from './account'
 import { IlpEndpoint, RequestHandler } from './endpoint'
 import { isReject } from 'ilp-packet'
 import { SError } from 'verror'
-import { IlpStream } from './stream'
+import { IlpTransport } from './transport'
 import { IlpSession } from './session'
+import { createConnection, Socket } from 'net'
+
+export const ILP_TLS_URL_PROTOCOL = 'ilp+tls:'
+export const ILP_TCP_URL_PROTOCOL = 'ilp+tcp:'
+export const ILP_IPC_URL_PROTOCOL = 'ilp+ipc:'
 
 export interface AuthOptions {
   authProtocol: string
@@ -39,6 +44,8 @@ export function deserializeAuth (data: Buffer): AuthResponse {
   }
 }
 
+export type IlpSessionAuthenticator = (endpoint: IlpEndpoint) => Promise<IlpSession>
+
 export async function authenticate (endpoint: IlpEndpoint, options: AuthOptions): Promise<IlpSession> {
 
   // Authenticate
@@ -59,25 +66,27 @@ export async function authenticate (endpoint: IlpEndpoint, options: AuthOptions)
 
 }
 
-export async function createConnection (url: URL, requestHandler: RequestHandler): Promise<IlpStream> {
+export async function createSession (url: URL, requestHandler: RequestHandler): Promise<IlpTransport> {
 
   const accountId = url.username
   const accountPassword = url.password
 
-  return new Promise<IlpStream>((resolve, reject) => {
+  return new Promise<IlpTransport>((resolve, reject) => {
 
     async function handleConnect (socket: Socket) {
-      const ilpSocket = new IlpStream(socket, requestHandler)
-      await ilpSocket.auth(createBasicAuthRequest(accountId, accountPassword, 30 * 1000))
-      return ilpSocket
+      const ilpStream = new IlpTransport(socket)
+      ilpStream.registerRequestHandler(requestHandler)
+
+      await authenticate(ilpStream, createBasicAuth(accountId, accountPassword, 30 * 1000))
+      return ilpStream
     }
 
     if (url.protocol === ILP_TCP_URL_PROTOCOL) {
-      const tcpSocket = createNetSocket(Number(url.port), url.hostname, () => {
+      const tcpSocket = createConnection(Number(url.port), url.hostname, () => {
         return handleConnect(tcpSocket)
       })
     } else if (url.protocol === ILP_IPC_URL_PROTOCOL) {
-      const ipcSocket = createNetSocket(url.pathname, () => {
+      const ipcSocket = createConnection(url.pathname, () => {
         return handleConnect(ipcSocket)
       })
     } else if (url.protocol === ILP_TLS_URL_PROTOCOL) {

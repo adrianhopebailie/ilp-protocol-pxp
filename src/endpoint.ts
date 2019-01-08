@@ -1,35 +1,33 @@
 import { IlpPrepare, IlpReply } from 'ilp-packet'
-import { EventEmitter } from 'events'
 
-export type RequestHandler = (message: IlpPrepare, meta: object) => Promise<IlpReply>
+export type RequestHandler = (packet: IlpPrepare, meta: object) => Promise<IlpReply>
 
 export interface IlpEndpoint {
 
   /**
-   * The ILP address of this endpoint
+   * The handlers for incoming requests indexed by the ILP Address or prefix of the address from the request.
    */
-  address?: string
+  handlers: Map<string, RequestHandler>
 
   /**
    * Send a Request and wait for the Reply.
    *
-   * @param message Message to send
-   * @param sentCallback Callback invoked by the underlying socket when the message has been sent
+   * Caller may pass a Buffer that contains a serialized ILP Prepare in which case a serialized ILP Reply will be returned.
+   *
+   * @param request ILP Prepare packet to send
+   * @param sentCallback Callback invoked by the underlying stream when the message has been sent
    */
-  request: (message: IlpPrepare, sentCallback?: () => void) => Promise<IlpReply>
+  request: (request: IlpPrepare, sentCallback?: () => void) => Promise<IlpReply>
 
+  /**
+   * EventEmitter interface methods for `error` events
+   */
   addListener (event: 'error', listener: (err: Error) => void): this
-
   emit (event: 'error', err: Error): boolean
-
   on (event: 'error', listener: (err: Error) => void): this
-
   once (event: 'error', listener: (err: Error) => void): this
-
   prependListener (event: 'error', listener: (err: Error) => void): this
-
   prependOnceListener (event: 'error', listener: (err: Error) => void): this
-
   removeListener (event: 'error', listener: (err: Error) => void): this
 
 }

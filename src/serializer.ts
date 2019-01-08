@@ -1,6 +1,6 @@
 import { Transform, TransformOptions, TransformCallback } from 'stream'
 import { isPrepare, serializeIlpPrepare, isFulfill, serializeIlpFulfill, isReject, serializeIlpReject } from 'ilp-packet'
-import { serializeFrame, isFrame } from './packet'
+import { serializeIlpMessage, isIlpMessage } from './message'
 
 export class IlpPacketSerializer extends Transform {
   constructor (options: TransformOptions) {
@@ -26,15 +26,15 @@ export class IlpPacketSerializer extends Transform {
 
 }
 
-export class IlpFrameSerializer extends Transform {
+export class MessageSerializer extends Transform {
   constructor (options: TransformOptions) {
     super(Object.assign(options, {
       writableObjectMode: true
     }))
   }
   _transform (chunk: any, encoding: string, callback: TransformCallback): void {
-    if (isFrame(chunk)) {
-      callback(undefined, serializeFrame(chunk))
+    if (isIlpMessage(chunk)) {
+      callback(undefined, serializeIlpMessage(chunk))
       return
     }
     callback(new Error('expected a Frame but got ' + typeof chunk))
