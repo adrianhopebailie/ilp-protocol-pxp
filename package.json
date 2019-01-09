@@ -1,7 +1,7 @@
 {
-  "name": "ilp-transport-btp",
+  "name": "ilp-transport",
   "version": "0.0.0",
-  "description": "BTP protocol library",
+  "description": "Interledger packet transport",
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "files": [
@@ -23,7 +23,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/interledgerjs/ilp-transport-btp.git"
+    "url": "git+https://github.com/interledgerjs/ilp-transport.git"
   },
   "author": "Interledger Team <info@interledger.org>",
   "license": "Apache-2.0",

@@ -12,8 +12,6 @@ export interface IlpEndpoint {
   /**
    * Send a Request and wait for the Reply.
    *
-   * Caller may pass a Buffer that contains a serialized ILP Prepare in which case a serialized ILP Reply will be returned.
-   *
    * @param request ILP Prepare packet to send
    * @param sentCallback Callback invoked by the underlying stream when the message has been sent
    */

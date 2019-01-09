@@ -79,7 +79,7 @@ export class NetMessageStream<M> extends Duplex {
       const bytes = this._serializer(chunk)
       this._stream.write(bytes, callback)
     } else {
-      callback(new Error('unexpected message type. expected a '))
+      callback(new Error('unexpected message type.'))
     }
   }
 
@@ -108,7 +108,7 @@ export class NetMessageStream<M> extends Duplex {
 }
 
 /**
- * A stream.Duplex implementation for `Message` objects that uses a stream.Duplex as the underlying byte stream.
+ * A stream.Duplex implementation for `IlpMessage` objects that uses a `stream.Duplex` as the underlying byte stream.
  */
 export class NetIlpMessageStream extends NetMessageStream<IlpMessage> {
   constructor (stream: Duplex) {

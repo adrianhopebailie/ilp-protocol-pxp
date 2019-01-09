@@ -5,15 +5,15 @@
 [![CircleCI](https://circleci.com/gh/interledgerjs/ilp-transport.svg?style=shield)](https://circleci.com/gh/interledgerjs/ilp-transport)
 [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
-This is a simple protocol for exchanging ILP packets in request/reply pairs. Packets are sent in an `IlpMessage` which is simply an `IlpPacket` prefixed by a fixed length batch id and a fixed length correlation id.
+This is a simple protocol for exchanging ILP packets in request/reply pairs. Packets are sent in an `IlpMessage` which is simply an `IlpPacket` prefixed by a fixed length (64 bit) id.
 
 `IlpMessages` can be sent over any underlying stream where the stream has an existing message framing protocol (e.g. WebSockets).
 
-Alternatively a stream that guarantees packet ordering and delivery (e.g. TCP)can be used with a standardized seperator between and each `IlpMessage` such as a carriage return, new line combination `\r\n`.
+Alternatively a stream that guarantees packet ordering and delivery (e.g. TCP) can be used since messages can easily be parsed from a continuous byte stream. 
 
 While untested, an implementation could reject messages that are too large to fit into a single datagram and simply send messages over a protocol such as UDP with a single message per datagram. The maximum size of ILP packets should allow for this in theory.
 
-This work is based upon previous protocols and experiments with details on some of the design decisions provided below. Mosy importantly the protocol does not bind itself to an underlying message transport OR session establishment protocol but can use whatever is appropriate for the situation.
+This work is based upon previous protocols and experiments with details on some of the design decisions provided below. Most importantly the protocol does not bind itself to an underlying message transport OR session establishment protocol but can use whatever is appropriate for the situation.
 
 For example, client-server connections can leverage the existing session establishment through an HTTP handshake and the efficient message framing of WebSockets. Where-as a host-to-host connection may use a raw TLS connection with session establishment leveraging the TLS handshake and framing done sim;ky through use aof a message seperator.
 

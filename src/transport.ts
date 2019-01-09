@@ -12,7 +12,7 @@ const DEFAULT_MAX_TIMEOUT_MS = 5 * 60 * 1000
 
 interface IlpTransportOptions {
 
-  handlers: Map<string, RequestHandler>
+  handlers?: Map<string, RequestHandler>
   batch?: number
   batchCutoverTimeoutMs?: number
   maxTimeoutMs?: number
@@ -45,10 +45,12 @@ export class IlpTransport extends EventEmitter implements IlpEndpoint {
     super()
     this._incoming = new Set()
     this._outgoing = new Map()
+    this._requestIdsByBatch = new Map()
 
     this._batch = (options && options.batch)
       ? options.batch
       : DEFAULT_BATCH
+
     this._minimumBatch = this._batch
     this._batchCutoverTimeoutMs = (options && options.batchCutoverTimeoutMs)
       ? options.batchCutoverTimeoutMs
@@ -90,15 +92,15 @@ export class IlpTransport extends EventEmitter implements IlpEndpoint {
 
   public request (request: IlpPrepare, sentCallback?: (error?: Error) => void): Promise<IlpReply> {
     if (!this._stream.writable) throw new Error('underlying stream is not writeable')
-    return new Promise<IlpReply>((replyCallback, errorCallback) => {
-      const packet = serializeIlpPrepare(request)
-      const message = this._nextMessage(packet)
-      const key = _requestKey(message)
+    const packet = serializeIlpPrepare(request)
+    const message = this._nextMessage(packet)
+    const key = _requestKey(message)
 
-      const timeoutMs = request.expiresAt.getMilliseconds() - new Date().getMilliseconds()
-      if (timeoutMs > this._maxTimeoutMs) {
-        throw new SError('invalid expiresAt in ILP packet. timeoutMs=%s, maxTimeoutMs=%s', timeoutMs, this._maxTimeoutMs)
-      }
+    const timeoutMs = request.expiresAt.valueOf() - Date.now()
+    if (timeoutMs > this._maxTimeoutMs || timeoutMs < 0) {
+      throw new SError('invalid expiresAt in ILP packet. timeoutMs=%s, maxTimeoutMs=%s', timeoutMs, this._maxTimeoutMs)
+    }
+    return new Promise<IlpReply>((replyCallback, errorCallback) => {
       const timeout = setTimeout(() => {
         this._outgoing.delete(key)
         errorCallback(new SError('timed out waiting for response'))
@@ -109,7 +111,6 @@ export class IlpTransport extends EventEmitter implements IlpEndpoint {
         this._outgoing.delete(key)
         replyCallback(deserializeIlpReply(response))
       }
-
       this._outgoing.set(key, { respond, timeout })
       this._stream.write(message, sentCallback)
     })
@@ -128,7 +129,6 @@ export class IlpTransport extends EventEmitter implements IlpEndpoint {
     try {
       const key = _requestKey(message)
       if (isRequestMessage(message)) {
-
         if (this._incoming.has(key)) {
           this.emit('error', new SError(`duplicate request received for key: ${key}`))
           return

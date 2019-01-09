@@ -30,15 +30,10 @@ function verifyAccountAndSecret (account: string, secret: string): boolean {
  */
 function authenticateRequest (req: IncomingMessage): string | undefined {
 
-  if (req.url) {
-    const url = new URL(req.url)
-    if (verifyAccountAndSecret(url.username, url.password)) return url.username
-  }
-
   if (req.headers.authorization) {
     const [authType, authValue] = req.headers.authorization.split(' ')
     if (authType.toLowerCase() === 'basic') {
-      const [account, secret] = atob(authValue).split(':')
+      const [account, secret] = Buffer.from(authValue, 'base64').toString().split(':')
       if (verifyAccountAndSecret(account, secret)) return account
     }
     // TODO Implement alternative authorization header based auth such as tokens
