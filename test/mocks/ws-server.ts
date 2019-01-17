@@ -7,19 +7,6 @@ import { serializeIldcpResponse } from 'ilp-protocol-ildcp'
 
 const ILP_TRANSPORT_SUB_PROTOCOL = 'ilp-transport'
 
-/**
- * Callback passed to the Server constructor for protocol negotiation
- *
- * @param protocols protocols supported by the client
- * @param request HTTP request initiating the connection
- */
-function handleIlpTransportSubProtocol (protocols: Array<string>, request: IncomingMessage): string | false {
-  if (protocols.includes(ILP_TRANSPORT_SUB_PROTOCOL)) {
-    return ILP_TRANSPORT_SUB_PROTOCOL
-  }
-  return false
-}
-
 export function createServer(
   port: number, 
   options: {serverIlpAddress?: string, assetCode?: string, assetScale?: number, users: {}}
