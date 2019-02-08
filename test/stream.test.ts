@@ -203,81 +203,87 @@ describe('IlpMessageStream', () => {
       buffer.chunks.push(Buffer.from('0000000100000001ff01ff','hex'))
       buffer.flush()
     })
+
+    it('should handle the case where underlying stream is buffering', (done) => {
+      const buffer = new BufferedStream()
+      const stream = new IlpMessageStream(buffer)
+      stream.on('data', (message) => {
+        expect(message).to.haveOwnProperty('batch')
+        expect(message).to.haveOwnProperty('id')
+        expect(message).to.haveOwnProperty('payload')
+        expect(message.batch).to.be.equal(1)
+        expect(message.id).to.be.equal(1)
+        expect(message.payload.toString('hex')).to.be.equal('ff01ff')
+        done()
+      })
+      buffer.chunks.push(Buffer.from('0000000100000001ff01ff','hex'))
+      buffer.flush()
+    })
+
+    it('should emit an error and close when reading anything but bytes from underlying stream ', () => {
+      const buffer = new Duplex({
+        objectMode: true,
+        read: () => {}
+      })
+      const stream = new IlpMessageStream(buffer)
+      const error = new Promise((resolve) => {
+        stream.on('error', (error) => {
+          expect(error).to.be.instanceOf(Error)
+          expect(error.message).to.be.equal('unexpected type read from underlying stream')
+          resolve()
+        })  
+      })
+      const close = new Promise((resolve) => {
+        stream.on('close', () => {
+          resolve()
+        })
+      })
+      buffer.push({})
+      expect(error).to.eventually.be.fulfilled
+      expect(close).to.eventually.be.fulfilled
+    })
   })
 
-  // describe('request', () => {
-  //   it('should send an ILP prepare and get back an ILP fulfill', async () => {
-  //     const transport = new IlpTransport(new MockIlpMessageStream())
-  //     const reply = transport.request({
-  //       amount: '10',
-  //       destination: 'test.mock',
-  //       executionCondition: Buffer.alloc(32),
-  //       expiresAt: new Date(Date.now() + 30000),
-  //       data: Buffer.alloc(0)
-  //     })
-  //     expect(reply).to.eventually.have.property('fulfillment')
-  //     expect(reply).to.eventually.have.property('data')
-  //   })
-  //   it('should attempt to send an ILP prepare with negative expiry and throw', async () => {
-  //     const transport = new IlpTransport(new MockIlpMessageStream())
-  //     expect(async () => {
-  //       await transport.request({
-  //         amount: '10',
-  //         destination: 'test.mock',
-  //         executionCondition: Buffer.alloc(32),
-  //         expiresAt: new Date(Date.now() - 1000),
-  //         data: Buffer.alloc(0)
-  //       })
-  //     }).to.throw
-  //   })
-  //   it('should attempt to send an ILP prepare with long expiry and throw', async () => {
-  //     const transport = new IlpTransport(new MockIlpMessageStream(), { maxTimeoutMs: 10000 })
-  //     expect(async () => {
-  //       await transport.request({
-  //         amount: '10',
-  //         destination: 'test.mock',
-  //         executionCondition: Buffer.alloc(32),
-  //         expiresAt: new Date(Date.now() + 15000),
-  //         data: Buffer.alloc(0)
-  //       })
-  //     }).to.throw
-  //   })
-  //   it('should send multiple of the same ILP prepare and get back fulfills', async () => {
-  //     const transport = new IlpTransport(new MockIlpMessageStream())
-  //     const prepare = {
-  //       amount: '10',
-  //       destination: 'test.mock',
-  //       executionCondition: Buffer.alloc(32),
-  //       expiresAt: new Date(Date.now() + 30000),
-  //       data: Buffer.alloc(0)
-  //     }
-  //     const replies = await Promise.all([
-  //       transport.request(prepare),
-  //       transport.request(prepare),
-  //       transport.request(prepare),
-  //       transport.request(prepare),
-  //       transport.request(prepare)
-  //     ])
-  //     replies.forEach(i => expect(i).to.have.property('fulfillment'))
-  //   })
-  //   it('should send multiple of the same ILP prepare and get back rejects', async () => {
-  //     const transport = new IlpTransport(new MockIlpMessageStream())
-  //     const prepare = {
-  //       amount: '10',
-  //       destination: 'test.mock.reject',
-  //       executionCondition: Buffer.alloc(32),
-  //       expiresAt: new Date(Date.now() + 30000),
-  //       data: Buffer.alloc(0)
-  //     }
-  //     const replies = await Promise.all([
-  //       transport.request(prepare),
-  //       transport.request(prepare),
-  //       transport.request(prepare),
-  //       transport.request(prepare),
-  //       transport.request(prepare)
-  //     ])
-  //     replies.forEach(i => expect(i).to.have.property('code'))
-  //   })
-  // })
+  describe('error', () => {
+    it('should bubble up errors from the underlying stream and then close', () => {
+      const buffer = new BufferedStream()
+      const stream = new IlpMessageStream(buffer)
+      const error = new Promise((resolve) => {
+        stream.on('error', (error) => {
+          expect(error).to.be.instanceOf(Error)
+          resolve()
+        })  
+      })
+      const close = new Promise((resolve) => {
+        stream.on('close', () => {
+          resolve()
+        })
+      })
+      buffer.error(new Error('some error'))
+      expect(error).to.eventually.be.fulfilled
+      expect(close).to.eventually.be.fulfilled
+    })
+  })
+
+  describe('close', () => {
+    it('should close if underlying stream is destroyed', () => {
+      const buffer = new BufferedStream()
+      const stream = new IlpMessageStream(buffer)
+      const error = new Promise((resolve) => {
+        stream.on('error', (error) => {
+          expect(error).to.be.instanceOf(Error)
+          resolve()
+        })  
+      })
+      const close = new Promise((resolve) => {
+        stream.on('close', () => {
+          resolve()
+        })
+      })
+      buffer.destroy(new Error('some error'))
+      expect(error).to.eventually.be.fulfilled
+      expect(close).to.eventually.be.fulfilled
+    })
+  })
 })
 

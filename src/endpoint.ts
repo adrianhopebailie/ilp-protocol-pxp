@@ -1,13 +1,18 @@
 import { IlpPrepare, IlpReply } from 'ilp-packet'
 
-export type RequestHandler = (packet: IlpPrepare, meta: object) => Promise<IlpReply>
+export type RequestHandler = (packet: IlpPrepare) => Promise<IlpReply>
 
+export type RequestHandlerProvider = (packet: IlpPrepare) => RequestHandler
+
+/**
+ * A standardized interface for sending and receiving ILP packets.
+ */
 export interface IlpEndpoint {
 
   /**
-   * The handlers for incoming requests indexed by the ILP Address or prefix of the address from the request.
+   * A provider of handler(s) for incoming requests.
    */
-  handlers: Map<string, RequestHandler>
+  handlerProvider: RequestHandlerProvider
 
   /**
    * Send a Request and wait for the Reply.

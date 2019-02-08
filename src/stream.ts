@@ -2,7 +2,7 @@ import { Duplex } from 'stream'
 import { IlpMessage, serializeIlpMessage, isIlpMessage } from './message'
 
 /**
- * Wraps a byte stream and converts into object stream reading/writing `IlpMessage` objects.
+ * Wraps a byte stream and converts it into an object stream reading/writing `IlpMessage` objects.
  */
 export class IlpMessageStream extends Duplex {
 
@@ -27,30 +27,31 @@ export class IlpMessageStream extends Duplex {
     this._buffering = false
     this._buffer = new Array()
 
-    this._stream.on('close', (code: number, reason: string) => {
-      this._end()
+    this._stream.on('close', () => {
+      this.destroy()
+    })
+
+    this._stream.on('end', () => {
+      while (this._buffer.length > 0) {
+        this.push(this._buffer.shift())
+      }
+      this.push(null)
+      this.emit('end')
+      this.destroy()
     })
 
     this._stream.on('error', (err: Error) => {
-      this.emit('error', err)
+      this._stream.destroy()
+      this.destroy(err)
     })
 
     this._stream.on('data', (chunk: any) => {
       if (Buffer.isBuffer(chunk)) {
         this._readChunk(chunk)
       } else {
-        this._stream.end()
-        this.emit('error', new Error('unexpected message type received'))
-        this._end()
+        this.destroy(new Error('unexpected type read from underlying stream'))
       }
     })
-  }
-
-  private _end () {
-    while (this._buffer.length > 0) {
-      this.push(this._buffer.shift())
-    }
-    this.push(null)
   }
 
   private _readChunk (chunk: Buffer) {

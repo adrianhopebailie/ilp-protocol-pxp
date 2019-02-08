@@ -110,6 +110,10 @@ export class BufferedStream extends Duplex {
     }
   }
 
+  public error(e: Error) {
+    this.emit('error', e)
+  }
+
   _write(chunk: any, encoding: string, callback: (error?: Error) => void): void {
     this.chunks.push(chunk)
     callback()
