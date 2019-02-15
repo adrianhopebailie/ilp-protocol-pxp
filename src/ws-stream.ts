@@ -1,9 +1,9 @@
 import * as WebSocket from 'ws'
 import { Duplex } from 'stream'
-import { IlpMessage, deserializeIlpMessage, serializeIlpMessage, isIlpMessage } from './message'
+import { MessageFrame, deserializeMessageFrame, serializeMessageFrame, isMessageFrame } from './message'
 
 /**
- * Wraps a WebSocket connection so that it exposes the standard stream.Duplex interface.
+ * Wraps a WebSocket connection so that it behaves like `stream.Duplex` in object mode.
  */
 export class WebSocketMessageStream<M> extends Duplex {
 
@@ -110,8 +110,8 @@ export class WebSocketMessageStream<M> extends Duplex {
  *
  * An instance of this class can be passed to the constructor of `IlpTransport`
  */
-export class WebSocketIlpMessageStream extends WebSocketMessageStream<IlpMessage> {
+export class WebSocketIlpMessageStream extends WebSocketMessageStream<MessageFrame> {
   constructor (socket: WebSocket) {
-    super(socket, deserializeIlpMessage, serializeIlpMessage, isIlpMessage)
+    super(socket, deserializeMessageFrame, serializeMessageFrame, isMessageFrame)
   }
 }

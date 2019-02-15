@@ -1,14 +1,14 @@
 import { Duplex } from 'stream'
-import { IlpMessage, serializeIlpMessage, isIlpMessage } from './message'
+import { MessageFrame, serializeMessageFrame, isMessageFrame } from './message'
 
 /**
- * Wraps a byte stream and converts it into an object stream reading/writing `IlpMessage` objects.
+ * Wraps a byte stream and converts it into an object stream reading/writing `MessageFrame` objects.
  */
-export class IlpMessageStream extends Duplex {
+export class MessageStream extends Duplex {
 
   protected _stream: Duplex
   protected _buffering: boolean
-  protected _buffer: Array<IlpMessage>
+  protected _buffer: Array<MessageFrame>
 
   protected _readBuffer: Buffer
   protected _readCursor: number
@@ -61,9 +61,8 @@ export class IlpMessageStream extends Duplex {
     let messageSize = getMessageSize(this._readBuffer, this._readCursor)
     while (messageSize !== undefined && this._readBuffer.length >= messageSize) {
       const message = {
-        batch: this._readBuffer.readUInt32BE(this._readCursor),
-        id: this._readBuffer.readUInt32BE(this._readCursor + 4),
-        payload: this._readBuffer.slice(this._readCursor + 8, this._readCursor + messageSize)
+        id: this._readBuffer.readUInt32BE(this._readCursor),
+        payload: this._readBuffer.slice(this._readCursor + 4, this._readCursor + messageSize)
       }
       if (this._buffering) {
         this._buffer.push(message)
@@ -77,8 +76,8 @@ export class IlpMessageStream extends Duplex {
   }
 
   _write (chunk: any, encoding: string, callback: (error?: Error | null) => void): void {
-    if (isIlpMessage(chunk)) {
-      this._stream.write(serializeIlpMessage(chunk), callback)
+    if (isMessageFrame(chunk)) {
+      this._stream.write(serializeMessageFrame(chunk), callback)
     } else {
       callback(new Error('unexpected message type.'))
     }
@@ -144,7 +143,7 @@ function getUnreadByteCount (buffer: Buffer, cursor: number) {
  * @param cursor read cursor
  */
 export function getMessageSize (buffer: Buffer, cursor: number): number | undefined {
-  const LENGTH_OFFSET = 9
+  const LENGTH_OFFSET = 5
   const unreadByteCount = getUnreadByteCount(buffer, cursor)
   if (unreadByteCount > LENGTH_OFFSET) {
     const length = buffer[cursor + LENGTH_OFFSET]
