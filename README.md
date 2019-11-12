@@ -41,7 +41,20 @@ sent and all frames will be ignored.
 
 PXP as specified here has been designed for WebSockets and QUIC.
 
+PXP assumes that the underlying transport is able to encapsulate complete PXP
+frames. Although the frame start and termination can be determined based on the
+length indicators in the encoding, both WebSockets and QUIC provide a convenient
+binary envelope for PXP frames.
+
 ## Framing
+
+The protocol is very simple as it leverages some of the existing fields in an
+ILP packet for protocol semantics.
+
+Frames either carry a correlation identifier as the first 4 octets OR leverage
+request/response matching features of the underlying transport.
+
+Each frame carries an ILP packet and variable length transport layer meta-data.
 
 PXP does not bind itself to an underlying message transport OR session
 establishment protocol but can use whatever is appropriate for the situation.
@@ -50,14 +63,6 @@ For example, client-server connections can leverage the existing session
 establishment through an HTTP handshake and the efficient message framing of
 WebSockets. Where-as a host-to-host connection may use a QUIC connection with
 session establishment leveraging the TLS handshake.
-
-The protocol is very simple as it leverages some of the existing fields in an
-ILP packet for protocol semantics.
-
-Frames either carry a correlation identifier as the first 4 octets OR leverage
-request/response matching features of the underlying transport.
-
-Each frame carries an ILP packet and transport layer meta-data.
 
 ## Versions
 
@@ -161,12 +166,15 @@ All messages are exchanged as request/reply pairs. A request will always contain
 an _ILP Prepare_ packet and a reply will always contain either an _ILP Fulfill_
 or an _ILP Reject_ packet.
 
-When using WebSockets requests and replies are correlated based on the
-`correlation id`. A request will have the same `correlation id` as the
-corresponding reply.
+### WebSockets
 
-When using QUIC requests and responses are correlated by using the same stream
-in much the same way as HTTP/3 leverages QUIC streams for request life-cycle.
+Requests and replies are correlated based on the `correlation id`. A request
+will have the same `correlation id` as the corresponding reply.
+
+### QUIC
+
+Requests and responses are correlated by using the same stream in much the same
+way as HTTP/3 leverages QUIC streams for request life-cycle.
 
 Either the client or server sends a request on a new bidirectional QUIC stream.
 The sender MUST send only a single request on a given stream. The receiver sends
@@ -223,8 +231,11 @@ MUST NOT make stream closure dependent on receiving a response to their request.
 After sending a final response, the receiver MUST close the stream for sending.
 At this point, the QUIC stream is fully closed.
 
-If the sender determines the request to have expired before a reply is received
-it MUST reset and abort the request stream with an error code of PXP_TIMEDOUT.
+If a receiver receives a second request on the same stream it MUST discard the
+request.
+
+If the sender determines a sent request to have expired before a reply is
+received it MUST reset and abort the request stream.
 
 > TODO: Define PXP errors or re-use ILP errors? Latter preferred but doesn't
 > make sense here.
