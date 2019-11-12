@@ -1,5 +1,5 @@
 import { Duplex } from 'stream'
-import { MessageFrame, serializeMessageFrame, isMessageFrame } from './message'
+import { MessageFrame, serializeMessageFrame, isMessageFrame } from './frame'
 
 /**
  * Wraps a byte stream and converts it into an object stream reading/writing `MessageFrame` objects.

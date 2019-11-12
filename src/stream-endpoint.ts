@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events'
 import { SError } from 'verror'
-import { MessageFrame } from './message'
+import { MessageFrame } from './frame'
 import { Endpoint, RequestHandler } from './endpoint'
 import { Duplex } from 'stream'
 

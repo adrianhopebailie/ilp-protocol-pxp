@@ -1,6 +1,6 @@
 import * as WebSocket from 'ws'
 import { Duplex } from 'stream'
-import { MessageFrame, deserializeMessageFrame, serializeMessageFrame, isMessageFrame } from './message'
+import { MessageFrame, deserializeMessageFrame, serializeMessageFrame, isMessageFrame } from './frame'
 
 /**
  * Wraps a WebSocket connection so that it behaves like `stream.Duplex` in object mode.
