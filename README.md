@@ -118,6 +118,8 @@ trace context.
 In keeping with other protocols in the ILP stable, the framing protocol uses OER
 encoding.
 
+When using WebSockets the frames are always sent as binary messages.
+
 When using QUIC, the stream identifiers are used to correlate requests and
 replies so the correlation-id is not required.
 
